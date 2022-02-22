@@ -230,6 +230,52 @@ function drawSquarepinski(levels) {
     }         
 }
 
+// makeTriangle():
+//
+// Makes a equilateral triangle with the midpoint of base at the origin.
+//
+function makeTriangle() {
+    glBegin(GL_TRIANGLES, "Triangle");
+    glVertex3f(0, Math.sqrt(3)/2, 0);
+    glVertex3f(-1/2, 0, 0);
+    glVertex3f(1/2, 0, 0);
+    glEnd();
+}
+
+// drawSTRI(levels):
+//
+// Draws the recursive figure of a Sierpinski triangle.  The integer
+// parameter `levels` indicates how many recursive levels should be
+// shown. 0 indicates that only a solid square gets drawn.
+//
+function drawSTRI(levels) {
+    if (levels == 0) {
+    glBeginEnd("Triangle");
+    } else {
+        glPushMatrix();
+
+        glPushMatrix();
+        glTranslatef(0, Math.sqrt(3)/4, 0);
+        glScalef(0.5, 0.5, 0.5);
+        drawSTRI(levels-1);
+        glPopMatrix();
+
+        glPushMatrix();
+        glTranslatef(-1/4, 0, 0);
+        glScalef(0.5, 0.5, 0.5);
+        drawSTRI(levels-1);
+        glPopMatrix();
+
+        glPushMatrix();
+        glTranslatef(1/4, 0, 0);
+        glScalef(0.5, 0.5, 0.5);
+        drawSTRI(levels-1);
+        glPopMatrix();
+
+        glPopMatrix();
+    }         
+}
+
 // RTRI
 //
 // Describes an isoceles right triangle whose corner is at the origin
@@ -681,7 +727,10 @@ function draw() {
 	glColor3f(0.5, 0.3, 0.55);
 	glPushMatrix();
 	glScalef(3.0,3.0,3.0);
-	drawSquarepinski(recursiveLevels);
+
+	//drawSquarepinski(recursiveLevels);
+    glTranslatef(0, -Math.sqrt(3)/4, 0)
+    drawSTRI(recursiveLevels);
 	glPopMatrix();
 	
     }
@@ -792,7 +841,7 @@ function main() {
     makeDISK();
     makeSquare();
     makeWireCube();
-
+    makeTriangle();
     ortho(800,640);
 
     // Register interaction callbacks.
