@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>We made a scene. </title>
+
+    <script id="glsl/vs-uniform-color.c" type="x-shader/x-vertex">
+//
+// vs-uniform-color.c
+//
+// Reed College CSCI 385 Computer Graphics Speing 2022
+//
+// Simple vertex shader that preprocesses per-vertex information for a
+// fragment shader. It uses the same color information uniformly for
+// all the vertices of the object.
+//
+// It calculates a position using the supplied vertex positions and the two
+// standard WebGL transforation matrices.
+//
+// It sends the color information to the fragment shader.
+//
+attribute vec4 aVertexPosition;
+
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+uniform vec4 uColor;
+
+varying vec4 color;
+
+void main(void) {
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  color = uColor;
+}
+    </script>
+    <script id="glsl/vs-varying-color.c" type="x-shader/x-vertex">
+//
+// vs-varying-color.c
+//
+// Reed College CSCI 385 Computer Graphics Speing 2022
+//
+// Simple vertex shader that preprocesses per-vertex information for a
+// fragment shader. It expects the color information to vary amongst
+// the vertices of the object.
+//
+// It calculates a position using the supplied vertex positions and the two
+// standard WebGL transforation matrices.
+//
+// It sends the (interpolated) color information to the fragment shader.
+//
+attribute vec4 aVertexPosition;
+attribute vec4 aVertexColor;
+
+uniform mat4 uModelViewMatrix;
+uniform mat4 uProjectionMatrix;
+
+varying vec4 color;
+
+void main(void) {
+  gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  color = aVertexColor;
+}
+    </script>
+    <script id="glsl/fs-color.c" type="x-shader/x-fragment">
+//
+// fs-color.c
+//
+// Reed College CSCI 385 Computer Graphics Speing 2022
+//
+// Simple fragment shader that gets fed a color from the vertex shader.
+// Nothing else is communicated to it from the WebGL program.
+//
+varying lowp vec4 color;
+
+void main(void) {
+  gl_FragColor = color;
+}
+    </script>
+    <script id="glsl/vs-uniform-material.c" type="x-shader/x-vertex">
+//
+// vs-uniform-material.c
+//
+// Reed College CSCI 385 Computer Graphics Spring 2022
+//
+// Vertex shader that preprocesses per-vertex information to be fed
+// into a Phong fragment shader. It expects the material's color
+// information to be uniform over all the vertices of the object.
+//
+// It sends this (interpolated) information to the fragment shader: 
+// * The position of a fragment of a facet or line object defined by
+//   several vertex positions.
+// * The normal of that surface.
+// * The color of the material.
+//
+// It is fed per-vertex information with attributes for:
+// * vertex position
+// * surface normal at that vertex
+// * material color at that vertex
+//
+attribute vec4 aVertexPosition;   // Corner of some facet of the surface.
+attribute vec4 aVertexNormal;     // Surface normal at that osition.
+
+uniform mat4 uProjectionMatrix;
+uniform mat4 uModelViewMatrix;
+uniform vec4 uMaterialColor;      // Color of material.
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color. 
+
+void main() {
+  
+  // Transform and nterpolate vertex information.
+  position   = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  normal     = uProjectionMatrix * uModelViewMatrix * aVertexNormal;
+  material   = uMaterialColor;
+
+  // The output required by GLSL.
+  gl_Position = position;
+}
+    </script>
+    <script id="glsl/vs-varying-material.c" type="x-shader/x-vertex">
+//
+// vs-varying-material.c
+//
+// Reed College CSCI 385 Computer Graphics Speing 2022
+//
+// Vertex shader that preprocesses per-vertex information to be fed
+// into a Phong fragment shader. It expects the material's color
+// information to vary amongst the vertices of the object.
+//
+// It sends this (interpolated) information to the fragment shader:
+// * The position of a fragment of a facet or line object defined by
+//   several vertex positions.
+// * The normal of that surface.
+// * The color of the material.
+//
+// It is fed per-vertex information with attributes for:
+// * vertex position
+// * surface normal at that vertex
+// * material color at that vertex
+//
+attribute vec4 aVertexPosition;   // Corner of some facet of the surface.
+attribute vec4 aVertexNormal;     // Surface normal at that position.
+attribute vec4 aVertexMaterial;   // Color of material at that position.
+
+uniform mat4 uProjectionMatrix;
+uniform mat4 uModelViewMatrix;
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color.
+
+void main() {
+  
+  // Transform and nterpolate vertex information.
+  position   = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
+  normal     = uProjectionMatrix * uModelViewMatrix * aVertexNormal;
+  material   = aVertexMaterial;
+ 
+  // The output required by GLSL.
+  gl_Position = position;
+}
+    </script>
+    <script id="glsl/fs-phong.c" type="x-shader/x-fragment">
+//
+// fs-phong.c
+//
+// Reed College CSCI 385 Computer Graphics Speing 2022
+//
+// Fragment shader that performs a variant of Phong shading.
+//
+// It is fed position, material color, and normal info from the vertex shader.
+// It is also fed the following uniform information from the WebGL program:
+//  * The color of the ambient light.
+//  * Characteristics of a single light source (LIGHT0), namely:
+//    + its color
+//    + its position
+//    + whether (the specular component of) that light is on/off
+//  * The reflectance characteristics of the matrial, namely:
+//    + how much of it is diffuse
+//    + how much of it is specular
+//    + how shiny the surface is ("shininess" as employed by the Phong model)
+// It uses all this info to calculate the fragment color at its surface point.
+//
+
+precision highp float;
+
+varying vec4 position;   // Fragment's surface position.
+varying vec4 normal;     // Fragment's surface normal.
+varying vec4 material;   // Fragment surface's material color.
+
+uniform int  uLight0Enabled;  // Is the light on?
+uniform vec4 uLight0Position; // Location of the light.
+uniform vec4 uLight0Color;    // Light color.
+
+uniform vec4 uAmbientColor;    // Ambient light of environment.
+
+uniform float uMaterialDiffuse;   // Portion of reflection that's diffuse.
+uniform float uMaterialSpecular;  // Portion of reflection that's specular.
+uniform float uMaterialShininess; // Specular highlight control.
+
+void main() {
+  
+  vec4 light_color         = uLight0Color;
+  vec4 ambient_light_color = uAmbientColor;
+  
+  float diffuse_amount  = uMaterialDiffuse;
+  float specular_amount = uMaterialSpecular;
+  float shininess       = uMaterialShininess;
+  
+  //  vec4 light = uLightPosition;
+  vec4 light = uLight0Position;
+  vec4 eye   = vec4(0.0,0.0,-1.0,0.0);
+  
+  vec4  l = normalize(light - position);
+  vec4  e = normalize(eye - position);
+  vec4  n = normalize(normal);
+  vec4  r = -l + 2.0 * dot(l,n) * n;
+  float p = pow(max(dot(e,r),0.0),shininess);
+  
+  vec4 ambient  = ambient_light_color * material;
+  vec4 diffuse  = diffuse_amount * light_color * material * max(dot(l,n), 0.0);
+  vec4 specular = specular_amount * light_color * p * max(dot(l,n), 0.0);
+
+  if (dot(l,n) > 0.0) {
+    if (uLight0Enabled == 1) {
+      gl_FragColor = ambient + diffuse + specular;
+    } else {
+      gl_FragColor = ambient + diffuse;
+    }
+  } else {
+      gl_FragColor = ambient;
+  }
+}
+    </script>
+
+    
+    <script src="gl-matrix-min.js" defer></script>
+    <script src="gl.js" defer></script>
+    <script src="geometry.js" defer></script>
+    <script src="quat.js" defer></script>
+    <script src="load-shaders.js" defer></script>
+    <script src="opengl.js" defer></script>
+    <script src="scene.js" defer></script>
+  </head>
+
+  <body>
+    <canvas id="glcanvas" width="800" height="640"></canvas>
+    <br>
+    <font face="monospace">
+    <button onClick="glButtonAsKey('s')">(s)cene</button>
+    <input type="range" id="angle1" width="1" min="0" max="60" step="2.5" onChange="setAngle1(-this.value)"></input>
+    <input type="range" id="angle2" width="1" min="0" max="60" step="2.5" onChange="setAngle2(-this.value)"></input>
+    tree angles
+    <button onClick="glButtonAsKey('a')">(a)nimation</button>
+    <button onClick="glButtonAsKey('r')">(r)ecursive</button>
+    <input type="range" id="levels" width="10" min="0" max="5" onChange="setLevel(this.value)">levels</input>
+    </font>
+  </body>
+</html>
