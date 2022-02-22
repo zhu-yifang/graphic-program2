@@ -43,6 +43,8 @@ var treeAngle2 = -30;
 var scene = "scene";
 var sunLocation = {x: -1.5, y: 1.0};
 
+var birdLocation = {x: -1.5, y: 1.0};
+
 var lastw = 800;
 var lasth = 640;
 
@@ -408,6 +410,34 @@ function TREE() {
     glPopMatrix()
 }
 
+function TREE1() {
+    
+    // trunk
+    glTranslatef(-1, -1, 0);
+    glPushMatrix();
+    glScalef(0.5, 0.5, 0.5);
+    glColor3f(0.57, 0.34, 0.15);
+    RECT();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.25, 1.71, 0);
+    glRotatef(-135, 0, 0, 1);
+    glColor4f(0.1,0.5,0.2,0.7);
+    RTRI();
+    glPopMatrix();
+
+    glPushMatrix();
+
+    glTranslatef(0.25, 2, 0);
+    glRotatef(-135, 0, 0, 1);
+    glScalef(0.8, 0.8, 0);
+    glColor4f(0.1,0.5,0.2,0.7);
+    RTRI();
+    glPopMatrix();
+    
+}
+
 function convertMouseToCurrent(mousex,mousey) {
     const pj = mat4.create();
     glGetFloatv(GL_PROJECTION_MATRIX, pj);
@@ -442,6 +472,104 @@ function SUN() {
     glPopMatrix();
 }
 
+//
+//
+function BIRD() {
+    glPushMatrix();
+
+    glTranslatef(birdLocation.x, birdLocation.y, 0);
+
+    // body
+    glPushMatrix();
+    glScalef(0.15,0.15,0.15);
+    glColor3f(1, 1, 0);
+    DISK();
+    glPopMatrix();
+    // head and eyes
+    glPushMatrix();
+    glTranslatef(0.25, 0, 0);
+    glScalef(0.1, 0.1, 0.1);
+    glColor3f(1, 1, 0);
+    DISK();
+    glTranslatef(0, 0.5, 0);
+    glScalef(0.25, 0.25, 0.25);
+    glColor3f(0, 0, 0);
+    DISK();
+    glPopMatrix();
+    
+    // wings
+    glPushMatrix();
+    glTranslatef(0, 0.35, 0);
+    glScalef(0.2, 0.3, 0);
+    glRotatef(-135, 0, 0, 1);
+    glColor3f(1, 1, 0);
+    RTRI();
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0, -0.35, 0);
+    glScalef(0.2, 0.3, 0);
+    glRotatef(-135, 0, 0, 1);
+    glRotatef(180, 0, 0, 1);
+    glColor3f(1, 1, 0);
+    RTRI();
+    glPopMatrix();
+    
+    // tail
+    glPushMatrix();
+    glTranslatef(-0.15, 0, 0);
+    glRotatef(135, 0, 0, 1);
+    glScalef(0.2, 0.2, 0);
+    glColor3f(1, 1, 0);
+    RTRI();
+    glPopMatrix();
+    
+    // beak
+    glPushMatrix();
+    glTranslatef(0.38, 0, 0);
+    glRotatef(135, 0, 0, 1);
+    glScalef(0.05, 0.05, 0);
+    glColor3f(1, 0, 0);
+    RTRI();
+    glPopMatrix();
+
+    glPopMatrix();
+}
+
+function CAR() {
+    // body
+    glPushMatrix();
+    glTranslatef(0, 1, 0);
+    glRotatef(-90, 0, 0, 1);
+    glColor3f(0.8, 0, 0);
+    RECT();
+    glPopMatrix();
+    // wheels
+    glPushMatrix();
+    glColor3f(0.5, 0.5, 0.5);
+    glTranslatef(0.5, 0, 0);
+    glScalef(0.25, 0.25, 0.5);
+    DISK();
+    glPopMatrix();
+
+    glPushMatrix();
+    glColor3f(0.5, 0.5, 0.5);
+    glTranslatef(1.5, 0, 0);
+    glScalef(0.25, 0.25, 0.5);
+    DISK();
+    glPopMatrix();
+
+    // windows
+    glPushMatrix();
+    glColor3f(1, 1, 1);
+    glTranslatef(0.2, 0.75, 0);
+    glScalef(0.8, 0.4, 0);
+    glRotatef(-90, 0, 0, 1);
+    RECT();
+    glPopMatrix();
+
+
+}
 function handleKey(key, x, y) {
     /* 
      * Handle a keypress.
@@ -505,6 +633,16 @@ function drawHouse() {
     glPopMatrix();
 }
 
+function drawScene() {
+    BIRD();
+    glPushMatrix();
+    glTranslatef(-1, -0.5, 0);
+    TREE1();
+    glPopMatrix();
+    glTranslatef(-0.5, -1.5, 0);
+    CAR();
+}
+
 function draw() {
     /*
      * Issue GL calls to draw the requested graphics.
@@ -527,7 +665,7 @@ function draw() {
 
     if (scene == "scene") {
 	
-	drawHouse();
+	drawScene();
 	
     } else if (scene == "animation") {
 
@@ -606,7 +744,7 @@ function handleMouseClick(button, state, x, y) {
     }
 
     if (scene == "scene") {
-	sunLocation = mouseStart;
+	birdLocation = mouseStart;
     }
     
     glutPostRedisplay()
@@ -637,7 +775,7 @@ function handleMouseMotion(x, y) {
 	orientation = quatClass.for_rotation(angle,axis).times(orientation);
     }
     if (scene == "scene") {
-	sunLocation = mouseStart;
+	birdLocation = mouseStart;
     }
     
     // Update window.
