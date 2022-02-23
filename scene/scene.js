@@ -119,21 +119,27 @@ let shoulder = 0.0;
 let elbow = 0.0;
 let wrist = 15 / Math.PI;
 
+let hip = 0;
+let knee = 0;
+let ankle = 0;
+let circleAngle = 0;
+
 function drawWavingArm() {
     if (animate) {
+    // the angle to rotate per frame
 	shoulder += 7.5/180.0 * Math.PI;
 	elbow += 7.5/180.0 * Math.PI;
 	wrist += 15/180.0 * Math.PI;
     }
-    
+    // 
     const length = 0.8;
     const width = 0.25;
-    
+    // 
     const shoulderAngle = 20.0 * Math.cos(shoulder) + 20;
     const elbowAngle = 40.0 * Math.sin(elbow) + 40.0;
     const wristAngle = -75.0 * Math.sin(wrist);
 
-    glColor3f(0.5,0.6,0.2)
+    //glColor3f(0.5,0.6,0.2)
 
     glPushMatrix();
     glScalef(1.5,1.5,1.5);
@@ -189,6 +195,46 @@ function drawWavingArm() {
     glPopMatrix();
 }
 
+function drawLeg() {
+    if (animate) {
+    // the angle to rotate per frame
+    hip += 7.5/180.0 * Math.PI;
+    knee += 7.5/180.0 * Math.PI;
+    ankle += 15/180.0 * Math.PI;
+    circleAngle += 1;
+    }
+
+    const hipAngle = 30.0 * Math.cos(hip) + 20;
+    const kneeAngle = 60.0 * Math.sin(knee) - 30.0;
+    const ankleAngle = -10.0 * Math.sin(ankle) + 10;
+     
+    glRotatef(circleAngle, 0, 0, 1);
+    glColor3f(1, 1, 1);
+    glRotatef(hipAngle, 1, 0, 0);
+    // thigh
+    glPushMatrix();
+    glScalef(1, 1, 2);
+    glBeginEnd("WireCube");
+    glPopMatrix();
+
+    glRotatef(kneeAngle, 1, 0, 0);
+    // lower leg
+    glTranslatef(0, 0, -2);
+    glPushMatrix()
+    glScalef(1, 1, 2);
+    glBeginEnd("WireCube");
+    glPopMatrix();
+
+    glRotatef(ankleAngle, 1, 0, 0);
+    // foot
+    glPushMatrix();
+    glTranslatef(0, 0.5, -1.5);
+    glRotatef(90, 1, 0, 0);
+    glScalef(1, 1, 2);
+    glBeginEnd("WireCube");
+    glPopMatrix();
+
+}
 // makeSquare():
 //
 // Makes a unit square centered at the origin.
@@ -719,7 +765,9 @@ function draw() {
 	glPushMatrix();
 	// Reorient according to the "trackball" motion of mouse drags.
 	orientation.glRotatef();
-	drawWavingArm();
+	//drawWavingArm();
+    glScalef(0.5, 0.5, 0.5);
+    drawLeg();
 	glPopMatrix();
 
     } else if (scene == "recursive") {
